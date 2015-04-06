@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>ec47f9c3-6d92-4e36-8de7-68af3951e430</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>BaseTools.UI</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Common\BindingChangedEventArgs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\BindingMirror.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\CommandCollectionCanExecuteMode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\CommandCollection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\CommandHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\CommandItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\Converter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\DependecyPropertyListener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\DependencyObjectConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\StylesOverrideTool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\VisualTreeHelperExtensios.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ApplicationNavigationTracker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ClipExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ItemsControlExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ProportionalSizeManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ScrollViewerMonitor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\CoupleItemsHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\ListViewBaseWrapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\SelectionListener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\SelectorWrapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\SelectorWrapperMapping.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\TapListener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\TiltEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Controls\LightItemsControl.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Controls\Navigation\AnimationFrame.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Input\ManipulationCompletedSharedEventArgs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Input\ManipulationDeltaSharedEventArgs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Input\ManipulationListener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Input\ManipulationStartedSharedEventArgs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\ApplicationNavigationProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\ExternalNavigationListener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\ExternalNavigationState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\INavigationHistoryStorageProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\NavigationHistoryStorageProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\NavigationMapItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\NavigationMapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\NavigationModeConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Navigation\WinRTNavigationEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIFactoryInitializer.cs" />
+  </ItemGroup>
+</Project>

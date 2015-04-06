@@ -1,0 +1,65 @@
+﻿<phone:PhoneApplicationPage
+    x:Class="BaseTools.Sample.WpSilverlight.Views.BindableAppBarSample"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
+    xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:baseToolsControls="clr-namespace:BaseTools.UI.Controls;assembly=BaseTools.UI.WpSilverlight"
+    xmlns:local="clr-namespace:BaseTools.Sample.WpSilverlight.Views"
+    FontFamily="{StaticResource PhoneFontFamilyNormal}"
+    FontSize="{StaticResource PhoneFontSizeNormal}"
+    Foreground="{StaticResource PhoneForegroundBrush}"
+    SupportedOrientations="Portrait" Orientation="Portrait"
+    mc:Ignorable="d"
+    shell:SystemTray.IsVisible="True">
+
+    <phone:PhoneApplicationPage.Resources>
+        <Color x:Key="TransparentColor" >#DE000000</Color>
+        <Color x:Key="UntransparentColor" >#00000000</Color>
+    </phone:PhoneApplicationPage.Resources>
+    
+    <!--LayoutRoot is the root grid where all page content is placed-->
+    <Grid x:Name="LayoutRoot" Background="Yellow">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!--TitlePanel contains the name of the application and page title-->
+        <StackPanel Grid.Row="0" Margin="12,17,0,28">
+            <TextBlock Text="MY APPLICATION" Style="{StaticResource PhoneTextNormalStyle}"/>
+            <TextBlock Text="page name" Margin="9,-7,0,0" Style="{StaticResource PhoneTextTitle1Style}"/>
+        </StackPanel>
+
+        <!--ContentPanel - place additional content here-->
+        <Grid x:Name="ContentPanel"
+              Background="Green"
+              Grid.Row="1"
+              Margin="12">
+
+            <StackPanel>
+                
+            
+            <Button Content="Change opacity" 
+                    VerticalAlignment="Center"
+                    Click="Button_Click"/>
+
+            <Button Content="Help" 
+                    VerticalAlignment="Center"
+                    Click="Button_Click1"/>
+            </StackPanel>
+        </Grid>
+
+        <baseToolsControls:BindableApplicationBar x:Name="appBar"
+                                                  Mode="Minimized"   
+                                                  BackgroundColor="#DE000000"
+                                                  ForegroundColor="#FFFFFF">
+            <baseToolsControls:BindableApplicationBarIconButton Text="fdsg"
+                                                                IconUri="/assets/temp"
+                                                                baseToolsControls:AppBarItemClick.NavigationUri="/Views/EmptyPage.xaml"/>
+        </baseToolsControls:BindableApplicationBar>
+    </Grid>
+
+</phone:PhoneApplicationPage>
