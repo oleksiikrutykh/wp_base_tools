@@ -28,6 +28,10 @@
 
                 <HyperlinkButton Content="Long rectangle" 
                                  NavigateUri="/Views/LongRectangleSample.xaml" />
+
+
+                <HyperlinkButton Content="Image loader" 
+                                 NavigateUri="/Views/ImageLoaderSample.xaml" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -23,6 +23,7 @@ namespace BaseTools.UI.ControlExtensions
     using BaseTools.Core.FileSystem;
     using BaseTools.Core.Ioc;
     using System.Threading.Tasks;
+    using BaseTools.UI.Common;
 
     /// <summary>
     /// Provides access to the Image.UriSource attached property which allows
@@ -36,7 +37,7 @@ namespace BaseTools.UI.ControlExtensions
 
         private const int WorkItemQuantum = 5;
         private static readonly Thread _thread = new Thread(WorkerThreadProc);
-        private static Stack<PendingRequest> _pendingRequests = new Stack<PendingRequest>();
+        private static Queue<PendingRequest> _pendingRequests = new Queue<PendingRequest>();
         private static readonly Queue<IAsyncResult> _pendingResponses = new Queue<IAsyncResult>();
         private static readonly object _syncBlock = new object();
         private static bool _exiting;
@@ -171,41 +172,39 @@ namespace BaseTools.UI.ControlExtensions
             if (!DesignerProperties.IsInDesignTool)
             {
                 fileSystemProvider = Factory.Common.GetInstance<IFileSystemProvider>();
-                //ControlLifetimeListener.Instance.ControlDeactivate += OnControlRemoved;
-                //ControlLifetimeListener.Instance.ControlRestored += OnControlRestored;
+                ControlLifetimeListener.Instance.ControlDeactivate += OnControlRemoved;
+                ControlLifetimeListener.Instance.ControlRestored += OnControlRestored;
             }
         }
 
-        //private static void OnControlRestored(object sender, ControlRestoredEventArgs e)
-        //{
-        //    var image = (Image)e.Element;
-        //    StartLoading(image);
-        //    // Write restore logic.
-        //    //OnUriSourceChanged(image, )
-        //    //ClearPreviousImageSource(image.Source);
-        //}
+        private static void OnControlRestored(object sender, ControlRestoredEventArgs e)
+        {
+            var image = (Image)e.Element;
+            StartLoading(image);
 
-        //private static void OnControlRemoved(object sender, ControlRemovedEventArgs e)
-        //{
-        //    var image = (Image)e.Element;
-        //    ClearPreviousImageSource(image.Source);
-        //}
+        }
 
-        //private static bool IsControlActive(DependencyObject loadTarget)
-        //{
-        //    var imageCotnrol = loadTarget as Image;
-        //    bool isControlActive = true;
-        //    if (imageCotnrol != null)
-        //    {
-        //        var state = ControlLifetimeListener.Instance.DetermineControlState(imageCotnrol);
-        //        if (state == ControlLifetimeState.Unactive)
-        //        {
-        //            isControlActive = false;
-        //        }
-        //    }
+        private static void OnControlRemoved(object sender, ControlRemovedEventArgs e)
+        {
+            var image = (Image)e.Element;
+            ClearPreviousImageSource(image.Source);
+        }
 
-        //    return isControlActive;
-        //}
+        private static bool IsControlActive(DependencyObject loadTarget)
+        {
+            var imageCotnrol = loadTarget as Image;
+            bool isControlActive = true;
+            if (imageCotnrol != null)
+            {
+                var state = ControlLifetimeListener.Instance.DetermineControlState(imageCotnrol);
+                if (state == ControlLifetimeState.Unactive)
+                {
+                    isControlActive = false;
+                }
+            }
+
+            return isControlActive;
+        }
 
         private static void HandleApplicationExit(object sender, EventArgs e)
         {
@@ -242,7 +241,7 @@ namespace BaseTools.UI.ControlExtensions
                     var allowedCount = WorkItemQuantum - activeRequestCount;
                     while (_pendingRequests.Count > 0 && allowedCount > 0)
                     {
-                        var request = _pendingRequests.Pop();
+                        var request = _pendingRequests.Dequeue();
                         //var isControlActive = IsControlActive(request.Image);
                         //if (isControlActive)
                         //{
@@ -252,6 +251,10 @@ namespace BaseTools.UI.ControlExtensions
                                 notSendedRequestsDictionary.Remove(request.Image);
                                 pendingRequests.Enqueue(request);
                                 allowedCount--;
+                            }
+                        else
+                            {
+                                CompleteRequest(request);
                             }
                         //}
                     }
@@ -277,10 +280,11 @@ namespace BaseTools.UI.ControlExtensions
                     try
                     {
                         var response = responseState.WebRequest.EndGetResponse(pendingResponse);
-                        pendingCompletions.Enqueue(new PendingCompletion(responseState.Image, responseState.Uri, response.GetResponseStream()));
+                        pendingCompletions.Enqueue(new PendingCompletion(responseState.Image, responseState.Uri, response.GetResponseStream(), responseState.OriginRequest));
                     }
                     catch (WebException)
                     {
+                        CompleteRequest(responseState.OriginRequest);
                         // Ignore web exceptions (ex: not found)
                     }
                     // Yield to UI thread
@@ -290,52 +294,57 @@ namespace BaseTools.UI.ControlExtensions
                 if (0 < pendingCompletions.Count)
                 {
                     // Get the Dispatcher and process everything that needs to happen on the UI thread in one batch
-                    Deployment.Current.Dispatcher.BeginInvoke(() =>
+                    Deployment.Current.Dispatcher.BeginInvoke(async () =>
                     {
-                        while (0 < pendingCompletions.Count)
+                        using (await PerformanceDispatcher.Instance.ExecuteHeavyUIOperation())
                         {
-                            // Decode the image and set the source
-                            var pendingCompletion = pendingCompletions.Dequeue();
-
-                            //Somehow we get null reference exception from here. 
-                            if (pendingCompletion != null)
+                            while (0 < pendingCompletions.Count)
                             {
-                                if (GetSource(pendingCompletion.Image) == pendingCompletion.Uri)
-                                {
-                                    //var isControlActive = IsControlActive(pendingCompletion.Image);
-                                    //if (isControlActive)
-                                    //{
-                                        BitmapSource bitmap = null;
-                                        try
-                                        {
-                                            var imageSettings = GetImageSettings(pendingCompletion.Image);
-                                            if (imageSettings != null)
-                                            {
-                                                bitmap = CompressImage(pendingCompletion.Stream, imageSettings);
-                                            }
-                                            else
-                                            {
-                                                bitmap = new BitmapImage();
-                                                bitmap.SetSource(pendingCompletion.Stream);
-                                            }
-                                        }
-                                        catch
-                                        {
-                                            // Ignore image decode exceptions (ex: invalid image)
-                                        }
+                                // Decode the image and set the source
+                                var pendingCompletion = pendingCompletions.Dequeue();
 
-                                        SetContentForImage(pendingCompletion.Image, bitmap);
-                                    //}
-                                }
-                                else
+                                //Somehow we get null reference exception from here. 
+                                if (pendingCompletion != null)
                                 {
-                                    // Uri mis-match; do nothing
-                                }
+                                    if (GetSource(pendingCompletion.Image) == pendingCompletion.Uri)
+                                    {
+                                        var isControlActive = IsControlActive(pendingCompletion.Image);
+                                        if (isControlActive)
+                                        {
+                                            BitmapSource bitmap = null;
+                                            try
+                                            {
+                                                var imageSettings = GetImageSettings(pendingCompletion.Image);
+                                                if (imageSettings != null)
+                                                {
+                                                    bitmap = CompressImage(pendingCompletion.Stream, imageSettings);
+                                                }
+                                                else
+                                                {
+                                                    bitmap = new BitmapImage();
+                                                    bitmap.SetSource(pendingCompletion.Stream);
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                // Ignore image decode exceptions (ex: invalid image)
+                                            }
 
-                                // Dispose of response stream if stream exist
-                                if (pendingCompletion.Stream != null)
-                                {
-                                    pendingCompletion.Stream.Dispose();
+                                            SetContentForImage(pendingCompletion.Image, bitmap);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Uri mis-match; do nothing
+                                    }
+
+                                    // Dispose of response stream if stream exist
+                                    if (pendingCompletion.Stream != null)
+                                    {
+                                        pendingCompletion.Stream.Dispose();
+                                    }
+
+                                    CompleteRequest(pendingCompletion.OriginRequest);
                                 }
                             }
                         }
@@ -351,32 +360,35 @@ namespace BaseTools.UI.ControlExtensions
             sourceBitmapImage.CreateOptions = BitmapCreateOptions.None;
             sourceBitmapImage.SetSource(stream);
 
-            bool isBigPhoto = sourceBitmapImage.PixelHeight > 300 || sourceBitmapImage.PixelWidth > 300;
-            if (isBigPhoto && sourceBitmapImage.PixelHeight > settings.Height &&
-                sourceBitmapImage.PixelWidth > settings.Width)
+            if (settings.Height > 0 && settings.Width > 0)
             {
-                var scaleHeight = settings.Height / sourceBitmapImage.PixelHeight;
-                var scaleWidth = settings.Width / sourceBitmapImage.PixelWidth;
-                var scale = Math.Max(scaleHeight, scaleWidth);
-
-                Image rawImage = new Image();
-                rawImage.Source = sourceBitmapImage;
-
-                ScaleTransform transform = new ScaleTransform();
-                transform.ScaleX = scale; 
-                transform.ScaleY = scale;
-
-                WriteableBitmap WritebleBitmapToTransform = new WriteableBitmap((int)settings.Width, (int)settings.Height);
-                WritebleBitmapToTransform.Render(rawImage, transform);
-                WritebleBitmapToTransform.Invalidate();
-                using (var compressednStream = new MemoryStream())
+                bool isBigPhoto = sourceBitmapImage.PixelHeight > 300 || sourceBitmapImage.PixelWidth > 300;
+                if (isBigPhoto && sourceBitmapImage.PixelHeight > settings.Height &&
+                    sourceBitmapImage.PixelWidth > settings.Width)
                 {
-                    WritebleBitmapToTransform.SaveJpeg(compressednStream, WritebleBitmapToTransform.PixelWidth, WritebleBitmapToTransform.PixelHeight, 0, 100);
-                    rawImage.Source = null;
-                    ClearPreviousImageSource(sourceBitmapImage);
-                    var compressedSource = new BitmapImage();
-                    compressedSource.SetSource(compressednStream);
-                    source = compressedSource;
+                    var scaleHeight = settings.Height / sourceBitmapImage.PixelHeight;
+                    var scaleWidth = settings.Width / sourceBitmapImage.PixelWidth;
+                    var scale = Math.Max(scaleHeight, scaleWidth);
+
+                    Image rawImage = new Image();
+                    rawImage.Source = sourceBitmapImage;
+
+                    ScaleTransform transform = new ScaleTransform();
+                    transform.ScaleX = scale;
+                    transform.ScaleY = scale;
+
+                    WriteableBitmap WritebleBitmapToTransform = new WriteableBitmap((int)settings.Width, (int)settings.Height);
+                    WritebleBitmapToTransform.Render(rawImage, transform);
+                    WritebleBitmapToTransform.Invalidate();
+                    using (var compressednStream = new MemoryStream())
+                    {
+                        WritebleBitmapToTransform.SaveJpeg(compressednStream, WritebleBitmapToTransform.PixelWidth, WritebleBitmapToTransform.PixelHeight, 0, 100);
+                        rawImage.Source = null;
+                        ClearPreviousImageSource(sourceBitmapImage);
+                        var compressedSource = new BitmapImage();
+                        compressedSource.SetSource(compressednStream);
+                        source = compressedSource;
+                    }
                 }
             }
 
@@ -430,7 +442,7 @@ namespace BaseTools.UI.ControlExtensions
         {
             var webRequest = HttpWebRequest.CreateHttp(pendingRequest.Uri);
             webRequest.AllowReadStreamBuffering = true; // Don't want to block this thread or the UI thread on network access
-            webRequest.BeginGetResponse(HandleGetResponseResult, new ResponseState(webRequest, pendingRequest.Image, pendingRequest.Uri));
+            webRequest.BeginGetResponse(HandleGetResponseResult, new ResponseState(webRequest, pendingRequest.Image, pendingRequest.Uri, pendingRequest));
             Interlocked.Increment(ref activeRequestCount);
         }
 
@@ -444,7 +456,6 @@ namespace BaseTools.UI.ControlExtensions
                 path = path.TrimStart('/');
             }
 
-          
             try
             {
                 var resourceStreamUri = new Uri(path, UriKind.Relative);
@@ -452,13 +463,17 @@ namespace BaseTools.UI.ControlExtensions
                 var streamResourceInfo = Application.GetResourceStream(resourceStreamUri);
                 if (null != streamResourceInfo && null != streamResourceInfo.Stream)
                 {
-                    pendingCompletions.Enqueue(new PendingCompletion(pendingRequest.Image, pendingRequest.Uri, streamResourceInfo.Stream));
+                    
+                    pendingCompletions.Enqueue(new PendingCompletion(pendingRequest.Image, pendingRequest.Uri, streamResourceInfo.Stream, pendingRequest));
                 }
             }
             catch 
             {
+                CompleteRequest(pendingRequest);
                 // ignore wrong uri or IO exeptions
             }
+
+            CompleteRequest(pendingRequest);
         }
 
         private static async void ReadImageFromStorage(string path, PendingRequest pendingRequest, Queue<PendingCompletion> pendingCompletions)
@@ -469,11 +484,15 @@ namespace BaseTools.UI.ControlExtensions
                 {
                     var memoryStream = new MemoryStream();
                     fileStream.CopyTo(memoryStream);
-                    pendingCompletions.Enqueue(new PendingCompletion(pendingRequest.Image, pendingRequest.Uri, memoryStream));
+                    pendingCompletions.Enqueue(new PendingCompletion(pendingRequest.Image, pendingRequest.Uri, memoryStream, pendingRequest)); 
                     lock (_syncBlock)
                     {
                         Monitor.Pulse(_syncBlock);
                     }
+                }
+                else
+                {
+                    CompleteRequest(pendingRequest);
                 }
             }
         }
@@ -533,10 +552,10 @@ namespace BaseTools.UI.ControlExtensions
             var imageControl = o;
             var uri = (string)e.NewValue;
             var image = imageControl as Image;
-            //if (image != null)
-            //{
-            //    ControlLifetimeListener.Instance.TrackControl(image);
-            //}
+            if (image != null)
+            {
+                ControlLifetimeListener.Instance.TrackControl(image);
+            }
 
             StartLoading(imageControl, uri);
         }
@@ -564,13 +583,37 @@ namespace BaseTools.UI.ControlExtensions
             }
             else
             {
-                SetContentForImage(imageControl, LoadingImageSource);
-                await Task.Delay(500);
+                DisplayLoadingStub(imageControl);
                 EnqueueRequest(imageControl, uri);
             }
         }
 
-        public static void EnqueueRequest(DependencyObject image, string imageUri)
+
+        private static void DisplayLoadingStub(DependencyObject imageControl)
+        {
+            var loadingStub = LoadingImageSource;
+            var imageSettings = GetImageSettings(imageControl);
+            if (imageSettings != null)
+            {
+                if (imageSettings.LoadingImageStub != ImageStubPath.OriginalString)
+                {
+                    loadingStub = null;
+                    if (imageSettings.LoadingImageStub != null)
+                    {
+                        var uri = new Uri(imageSettings.LoadingImageStub, UriKind.RelativeOrAbsolute);
+                        loadingStub = new BitmapImage 
+                        {
+                            UriSource = uri,
+                            CreateOptions = BitmapCreateOptions.BackgroundCreation
+                        };
+                    }
+                }
+            }
+
+            SetContentForImage(imageControl, loadingStub);
+        }
+
+        public static async void EnqueueRequest(DependencyObject image, string imageUri)
         {
             lock (_syncBlock)
             {
@@ -580,13 +623,56 @@ namespace BaseTools.UI.ControlExtensions
                     request.Uri = null;
                 }
 
+                
+
                 request = new PendingRequest(image, imageUri);
                 notSendedRequestsDictionary[image] = request;
-                _pendingRequests.Push(request);
-                //_pendingRequests.Enqueue(request);
+                requestsDictionary[image] = request;
+                _pendingRequests.Enqueue(request);
                 Monitor.Pulse(_syncBlock);
             }
         }
+
+        private static Dictionary<DependencyObject, PendingRequest> requestsDictionary = new Dictionary<DependencyObject, PendingRequest>();
+
+        public static Task WaitOnLoading(DependencyObject image)
+        {
+            Task task = null;
+            PendingRequest request = null;
+            var isExist = requestsDictionary.TryGetValue(image, out request);
+            if (isExist)
+            {
+                if (request.ResultTaskSource == null)
+                {
+                    request.ResultTaskSource = new TaskCompletionSource<bool>();
+                }
+
+                task = request.ResultTaskSource.Task;   
+            }
+            else
+            {
+                task = Task.FromResult(false);
+            }
+
+            return task;
+        }
+
+        private static void CompleteRequest(PendingRequest request)
+        {
+            var taskSource = request.ResultTaskSource;
+            if (taskSource != null)
+            {
+                taskSource.SetResult(true);
+            }
+
+            PendingRequest currentPendedRequest = null;
+            requestsDictionary.TryGetValue(request.Image, out currentPendedRequest);
+            if (currentPendedRequest == request)
+            {
+                requestsDictionary.Remove(request.Image);
+            }
+        }
+
 
         private static void HandleGetResponseResult(IAsyncResult result)
         {
@@ -601,6 +687,8 @@ namespace BaseTools.UI.ControlExtensions
 
         private class PendingRequest
         {
+            TaskCompletionSource<bool> resultTaskSource;
+
             public DependencyObject Image { get; private set; }
             public string Uri { get; set; }
             public PendingRequest(DependencyObject image, string uri)
@@ -608,6 +696,8 @@ namespace BaseTools.UI.ControlExtensions
                 Image = image;
                 Uri = uri;
             }
+
+            public TaskCompletionSource<bool> ResultTaskSource { get; set; }
         }
 
         private class ResponseState
@@ -615,11 +705,13 @@ namespace BaseTools.UI.ControlExtensions
             public WebRequest WebRequest { get; private set; }
             public DependencyObject Image { get; private set; }
             public string Uri { get; private set; }
-            public ResponseState(WebRequest webRequest, DependencyObject image, string uri)
+            public PendingRequest OriginRequest { get; private set; }
+            public ResponseState(WebRequest webRequest, DependencyObject image, string uri, PendingRequest request)
             {
                 WebRequest = webRequest;
                 Image = image;
                 Uri = uri;
+                OriginRequest = request;
             }
         }
 
@@ -628,11 +720,15 @@ namespace BaseTools.UI.ControlExtensions
             public DependencyObject Image { get; private set; }
             public string Uri { get; private set; }
             public Stream Stream { get; private set; }
-            public PendingCompletion(DependencyObject image, string uri, Stream stream)
+
+            public PendingRequest OriginRequest { get; private set; }
+
+            public PendingCompletion(DependencyObject image, string uri, Stream stream, PendingRequest request)
             {
                 Image = image;
                 Uri = uri;
                 Stream = stream;
+                OriginRequest = request;
             }
         }
     }

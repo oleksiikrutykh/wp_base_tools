@@ -1,14 +1,16 @@
 ﻿namespace BaseTools.Core.DataAccess
 {
     using BaseTools.Core.FileSystem;
-using BaseTools.Core.Ioc;
-using BaseTools.Core.Storage;
-using BaseTools.Core.Threading;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+    using BaseTools.Core.Ioc;
+    using BaseTools.Core.Serialization;
+    using BaseTools.Core.Storage;
+    using BaseTools.Core.Threading;
+    using BaseTools.Core.Utility;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
 
     public class OperationRepeater<T>
     {
@@ -29,17 +31,32 @@ using System.Threading.Tasks;
         private IStorageProvider storageProvider = Factory.Common.GetInstance<IStorageProvider>();
 
         public OperationRepeater(string operationKey, Func<T, Task<bool>> action)
+            : this(operationKey, action, true)
+        {
+        }
+
+        public OperationRepeater(string operationKey, Func<T, Task<bool>> action, bool isStartAutomatically)
         {
             this.RetriesCountLimit = 50;
             this.RetriesPeriodLimit = TimeSpan.FromDays(30);
             this.dataKey = ExecutionFolder + operationKey;
             this.action = action;
+            if (isStartAutomatically)
+            {
+                this.Start();
+            }
+        }
+
+        public void Start()
+        {
             Task.Run(() => this.ExecuteStoredItems());
         }
 
         public TimeSpan RetriesPeriodLimit { get; set; }
 
         public int RetriesCountLimit { get; set; }
+
+        public event EventHandler<OperationCompletedEventArgs<T>> OperationCompleted;
 
         public IEqualityComparer<T> EqualityComparer
         {
@@ -51,6 +68,22 @@ using System.Threading.Tasks;
             set
             {
                 this.dataEqualityComparer = value;
+            }
+        }
+
+        public ISerializer Serializer { get; set; }
+
+        private ISerializer CurrentSerializer 
+        {
+            get
+            {
+                var serializer = this.Serializer;
+                if (serializer == null)
+                {
+                    serializer = this.storageProvider.Serializer; 
+                }
+
+                return serializer;
             }
         }
 
@@ -72,7 +105,7 @@ using System.Threading.Tasks;
                 }
 
                 statistics.Count++;
-                await storageProvider.WriteToFileAsync<Dictionary<T, OperationStatistics>>(dataKey, storedData);
+                await storageProvider.WriteToFileAsync<Dictionary<T, OperationStatistics>>(dataKey, storedData, this.CurrentSerializer);
             }
 
             await this.ExecuteStoredItems();
@@ -84,7 +117,7 @@ using System.Threading.Tasks;
             {
                 var fileSystemProvider = Factory.Common.GetInstance<IFileSystemProvider>();
                 await fileSystemProvider.CreateDirectoryAsync(ExecutionFolder);
-                this.storedData = await storageProvider.ReadFromFileAsync<Dictionary<T, OperationStatistics>>(dataKey);
+                this.storedData = await storageProvider.ReadFromFileAsync<Dictionary<T, OperationStatistics>>(dataKey, this.CurrentSerializer);
                 if (this.storedData == null)
                 {
                     this.storedData = new Dictionary<T, OperationStatistics>();
@@ -154,6 +187,7 @@ using System.Threading.Tasks;
                         if (itemStatistics.Count == 0)
                         {
                             this.storedData.Remove(dataItem);
+                            this.OperationCompleted.CallEvent(this, new OperationCompletedEventArgs<T>(dataItem, true));
                         }
                         else
                         {
@@ -166,7 +200,7 @@ using System.Threading.Tasks;
                         itemStatistics.UnsuccessfulTriesCount++;
                     }
 
-                    await storageProvider.WriteToFileAsync<Dictionary<T, OperationStatistics>>(dataKey, this.storedData);
+                    await storageProvider.WriteToFileAsync<Dictionary<T, OperationStatistics>>(dataKey, this.storedData, this.CurrentSerializer);
                 }
             }
         }
@@ -176,8 +210,10 @@ using System.Threading.Tasks;
             using (await dataLock.LockAsync())
             {
                 this.storedData.Remove(item);
-                await storageProvider.WriteToFileAsync<Dictionary<T, OperationStatistics>>(dataKey, this.storedData);
+                await storageProvider.WriteToFileAsync<Dictionary<T, OperationStatistics>>(dataKey, this.storedData, this.CurrentSerializer);
             }
+
+            this.OperationCompleted.CallEvent(this, new OperationCompletedEventArgs<T>(item, false));
         }
     }
 }

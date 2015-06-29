@@ -71,15 +71,26 @@
             this.AddHeaders(httpClient.DefaultRequestHeaders, message.Headers);
             try
             {
+                // TODO: fast fixes. Refactor
                 if (message.Method == BaseTools.Core.Network.HttpMethod.Get)
                 {
                     response = await httpClient.GetAsync(requestUri);
                 }
-                else
+                else if (message.Method == HttpMethod.Delete)
+                {
+                    response = await httpClient.DeleteAsync(requestUri);
+                }
+                else if (message.Method == HttpMethod.Post)
                 {
                     var content = this.PrepearePostContent(message);
                     this.AddHeaders(content.Headers, message.Headers);
                     response = await httpClient.PostAsync(requestUri, content);
+                }
+                else if (message.Method == HttpMethod.Put)
+                {
+                    var content = this.PrepearePostContent(message);
+                    this.AddHeaders(content.Headers, message.Headers);
+                    response = await httpClient.PutAsync(requestUri, content);
                 }
             }
             catch (Exception e)

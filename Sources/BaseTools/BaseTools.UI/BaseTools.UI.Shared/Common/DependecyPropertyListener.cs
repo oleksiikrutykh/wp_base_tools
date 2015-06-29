@@ -83,8 +83,11 @@
         ///</summary>
         public void Detach()
         {
-            this.target.ClearValue(this.property);
-            this.target = null;
+            if (this.target != null)
+            {
+                this.target.ClearValue(this.property);
+                this.target = null;
+            }
         }
 
         private void HandleValueChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)

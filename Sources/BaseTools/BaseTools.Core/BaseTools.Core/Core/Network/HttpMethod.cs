@@ -12,6 +12,8 @@
     public enum HttpMethod
     {
         Get,
-        Post
+        Post,
+        Delete,
+        Put
     }
 }

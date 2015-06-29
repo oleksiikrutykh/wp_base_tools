@@ -22,10 +22,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)Common\VisualTreeHelperExtensios.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ApplicationNavigationTracker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ClipExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ControlLifetimeListener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ControlLoadingListener.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ItemsControlExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\LoadingService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ProportionalSizeManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\ScrollViewerMonitor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\CoupleItemsHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\EmptyWrapper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\ListViewBaseWrapper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\SelectionListener.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\SelectionListener\SelectorWrapper.cs" />
@@ -33,6 +37,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\TapListener.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ControlExtensions\TiltEffect.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Controls\LightItemsControl.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Controls\MemoryCounter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Controls\Navigation\AnimationFrame.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\ManipulationCompletedSharedEventArgs.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\ManipulationDeltaSharedEventArgs.cs" />

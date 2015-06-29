@@ -7,6 +7,8 @@
     {
         object CurrentSource { get; }
 
+        object RootUIElement { get; }
+
         object Parameters { get; }
 
         NavigationEntry CurrentEntry { get;  }

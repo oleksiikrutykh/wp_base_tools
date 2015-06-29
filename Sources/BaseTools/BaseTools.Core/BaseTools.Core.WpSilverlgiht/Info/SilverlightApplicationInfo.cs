@@ -98,6 +98,8 @@
                         break;
                 }
             }
+
+            this.Capabilities.AllCapabilities = manifest.App.Capabilities.Select(c => c.Name).ToList();
         }
     }
 }

@@ -31,7 +31,7 @@
 
         private NavigationEntry targetEntry;
 
-        private NavigationMapper mapper;
+        private PathNavigationMapper mapper;
 
         private NavigationMode targetNavigatingMode;
 
@@ -71,6 +71,14 @@
         public event NavigationProviderEventHandler NavigationCanceled;
 
         public event EventHandler<NavigationEntryRemovedEventArgs> BackEntryRemoved;
+
+        public object RootUIElement
+        {
+            get
+            {
+                return this.frame;
+            }
+        }
 
         public NavigationEntry TargetEntry
         {
@@ -125,7 +133,7 @@
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Validated by Guard.")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "1", Justification = "Validated by Guard.")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "2", Justification = "Validated by Guard.")]
-        public void Initialize(Frame associatedFrame, NavigationMapper newMapper)
+        public void Initialize(Frame associatedFrame, PathNavigationMapper newMapper)
         {
             Guard.CheckIsNotNull(associatedFrame, "associatedFrame");
             Guard.CheckIsNotNull(newMapper, "newMapper");
@@ -242,8 +250,12 @@
             }
             else
             {
-                this.navigationStack.RemoveAt(this.navigationStack.Count - 1);
-                this.targetEntry = this.navigationStack[this.navigationStack.Count - 1];
+                this.targetEntry = null;
+                if (this.navigationStack.Count > 0)
+                {
+                    this.navigationStack.RemoveAt(this.navigationStack.Count - 1);
+                    this.targetEntry = this.navigationStack[this.navigationStack.Count - 1];
+                }
             }
 
             this.externalNavigationListener.HandleNavigatingEvent(e);
@@ -371,7 +383,7 @@
 
         private Uri BuildUri(object source)
         {
-            NavigationMapItem mappingItem = this.mapper.GetMapping(source);
+            PathNavigationMapItem mappingItem = this.mapper.GetMapping(source);
             if (mappingItem == null)
             {
                 var exceptionMessage = String.Format(CultureInfo.CurrentCulture, "Source {0} not mapped to any page", source.ToString());
@@ -425,7 +437,7 @@
                 }
 
                 pagePath = pagePath.Replace('\\', '/');
-                NavigationMapItem mapping = this.mapper.GetMapping(pagePath);
+                PathNavigationMapItem mapping = this.mapper.GetMapping(pagePath);
                 if (mapping != null)
                 {
                     navigationEntry.Source = mapping.Source;

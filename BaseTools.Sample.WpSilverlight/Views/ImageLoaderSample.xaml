@@ -1,18 +1,18 @@
 ﻿<phone:PhoneApplicationPage
-    x:Class="BaseTools.Sample.WpSilverlight.Views.EmptyPage"
+    x:Class="BaseTools.Sample.WpSilverlight.Views.ImageLoaderSample"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
     xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:extensions="clr-namespace:BaseTools.UI.ControlExtensions;assembly=BaseTools.UI.WpSilverlight"
     FontFamily="{StaticResource PhoneFontFamilyNormal}"
     FontSize="{StaticResource PhoneFontSizeNormal}"
     Foreground="{StaticResource PhoneForegroundBrush}"
     SupportedOrientations="Portrait" Orientation="Portrait"
     mc:Ignorable="d"
-    shell:SystemTray.IsVisible="True"
-    Style="{StaticResource PageStyle}">
+    shell:SystemTray.IsVisible="True">
 
     <!--LayoutRoot is the root grid where all page content is placed-->
     <Grid x:Name="LayoutRoot" Background="Transparent">
@@ -29,7 +29,11 @@
 
         <!--ContentPanel - place additional content here-->
         <Grid x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0">
-
+            <Image extensions:ImageLoader.Source="http://cdn.marketplaceimages.windowsphone.com/v8/images/407b62b0-afda-4258-af21-41a98c09ed07?imageType=screenshot_small&amp;rotation=0"
+                   x:Name="imageSuccess" />
+            <Image extensions:ImageLoader.Source="http://cdn.marketplaceimages.windowsphone.com/v8/images/407b62b0-afda-4258-af21-41a98c09ed08-invalid"
+                   x:Name="imageWebFail"/>
+            <!--<Image extensions:ImageLoader.Source="http://cdn.marketplaceimages.windowsphone.com/v8/images/407b62b0-afda-4258-af21-41a98c09ed08-invalid" />-->
         </Grid>
     </Grid>
 

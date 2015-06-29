@@ -20,5 +20,7 @@
         public bool AllowCallsAndSms { get; set; }
 
         public bool AllowPhotoMediaLibrary { get; set; }
+
+        public List<string> AllCapabilities { get; set; }
     }
 }

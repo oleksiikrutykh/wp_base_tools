@@ -2,10 +2,9 @@
 {
     using System;
 
-    public class NavigationMapItem
+    public class PathNavigationMapItem
     {
-#if SILVERLIGHT
-        public NavigationMapItem(string pagePath, object source, Type parameterType)
+        public PathNavigationMapItem(string pagePath, object source, Type parameterType)
         {
             this.Source = source;
             this.PagePath = pagePath;
@@ -17,10 +16,11 @@
         public string PagePath { get; private set; }
 
         public Type ParameterType { get; private set; }
-#endif
+    }
 
-#if WINRT
-        public NavigationMapItem(Type pageType, object source, Type parameterType)
+    public class TypeNavigationMapItem
+    {
+        public TypeNavigationMapItem(Type pageType, object source, Type parameterType)
         {
             this.Source = source;
             this.PageType = pageType;
@@ -32,7 +32,5 @@
         public Type PageType { get; private set; }
 
         public Type ParameterType { get; private set; }
-#endif
-
     }
 }

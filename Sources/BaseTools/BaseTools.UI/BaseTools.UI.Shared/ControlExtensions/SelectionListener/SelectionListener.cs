@@ -12,6 +12,8 @@
     using System.Collections.Generic;
     using System.Windows;
     using BaseTools.Core.Utility;
+    using BaseTools.Core.Info;
+    using System;
 
     public static class SelectionListener
     {
@@ -162,6 +164,19 @@
                 if (mapping.CanCreateWrapper(control))
                 {
                     wrapper = mapping.CreateWrapper(control);
+                }
+            }
+
+            if (wrapper == null)
+            {
+                if (EnvironmentInfo.Current.IsInDesignMode)
+                {
+                    wrapper = new EmptyWrapper();
+                }
+                else
+                {
+                    var errorMessage = String.Format("Control of type {0} isn't supported by SelectionListener. Register selection wrapper for this control.", control.GetType());
+                    throw new ArgumentException(errorMessage);
                 }
             }
 

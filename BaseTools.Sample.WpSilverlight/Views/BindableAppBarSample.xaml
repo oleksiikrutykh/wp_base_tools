@@ -13,7 +13,8 @@
     Foreground="{StaticResource PhoneForegroundBrush}"
     SupportedOrientations="Portrait" Orientation="Portrait"
     mc:Ignorable="d"
-    shell:SystemTray.IsVisible="True">
+    shell:SystemTray.IsVisible="True"
+    Style="{StaticResource PageStyle}">
 
     <phone:PhoneApplicationPage.Resources>
         <Color x:Key="TransparentColor" >#DE000000</Color>
@@ -52,12 +53,18 @@
             </StackPanel>
         </Grid>
 
+        <!--BackgroundColor="#DE000000"
+                                                  ForegroundColor="#FFFFFF"-->
+        
         <baseToolsControls:BindableApplicationBar x:Name="appBar"
                                                   Mode="Minimized"   
-                                                  BackgroundColor="#DE000000"
-                                                  ForegroundColor="#FFFFFF">
+                                                  >
             <baseToolsControls:BindableApplicationBarIconButton Text="fdsg"
                                                                 IconUri="/assets/temp"
+                                                                baseToolsControls:AppBarItemClick.NavigationUri="/Views/EmptyPage.xaml"/>
+
+            <baseToolsControls:BindableApplicationBarMenuItem Text="to empty"
+                                                                
                                                                 baseToolsControls:AppBarItemClick.NavigationUri="/Views/EmptyPage.xaml"/>
         </baseToolsControls:BindableApplicationBar>
     </Grid>

@@ -32,6 +32,8 @@
             }
         }
 
+        public string InitialFolder { get; set; }
+
         public override Task<System.IO.Stream> OpenFileAsync(string filePath, FileOpeningMode mode)
         {
             return Task.Run(async () =>

@@ -45,6 +45,7 @@
     <Compile Include="Core\DataAccess\DataRequest.cs" />
     <Compile Include="Core\DataAccess\DataResponse.cs" />
     <Compile Include="Core\DataAccess\HttpRequest.cs" />
+    <Compile Include="Core\DataAccess\OperationCompletedEventArgs.cs" />
     <Compile Include="Core\DataAccess\OperationRepeater.cs" />
     <Compile Include="Core\DataAccess\OperationStatistics.cs" />
     <Compile Include="Core\DataAccess\Parsers\StringParser.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="Core\DataAccess\Parsers\EmptyParser.cs" />
     <Compile Include="Core\DataAccess\ResponseError.cs" />
     <Compile Include="Core\Diagnostics\AnalyticsProvider.cs" />
+    <Compile Include="Core\Diagnostics\MailLogger.cs" />
     <Compile Include="Core\Diagnostics\SessionTracker.cs" />
     <Compile Include="Core\Diagnostics\StorableLoggingMessage.cs" />
     <Compile Include="Core\Diagnostics\StorageLogger.cs" />
@@ -102,7 +104,9 @@
     <Compile Include="Core\Models\EdiatbleLookup.cs" />
     <Compile Include="Core\Models\EditableGroup.cs" />
     <Compile Include="Core\Models\ErrorOccurredEventArgs.cs" />
+    <Compile Include="Core\Models\KeyValueCollection.cs" />
     <Compile Include="Core\Models\Subcollection.cs" />
+    <Compile Include="Core\Models\WeakReferences\WeakDictionary.cs" />
     <Compile Include="Core\Network\ConnectionChangedEventArgs.cs" />
     <Compile Include="Core\Network\CookieStorage.cs" />
     <Compile Include="Core\Network\File.cs" />
@@ -156,6 +160,7 @@
     <Compile Include="Core\Utility\EventExtesions\EventWaiter.cs" />
     <Compile Include="Core\Utility\EventExtesions\EventWaiterBase.cs" />
     <Compile Include="Core\Utility\EventExtesions\EventWaiterOfT.cs" />
+    <Compile Include="Core\Utility\HtmlHelper.cs" />
     <Compile Include="Core\Utility\LinqExtesions.cs" />
     <Compile Include="Core\Utility\ListHelper.cs" />
     <Compile Include="Core\Utility\Releaser.cs" />
@@ -180,6 +185,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Messages.resx</DependentUpon>
     </Compile>
+    <Compile Include="UI\Common\PerformanceDispatcher.cs" />
     <Compile Include="UI\Dialogs\DialogButton.cs" />
     <Compile Include="UI\Dialogs\MessageBoxProvider.cs" />
     <Compile Include="UI\Dialogs\MessageBoxProviderButton.cs" />

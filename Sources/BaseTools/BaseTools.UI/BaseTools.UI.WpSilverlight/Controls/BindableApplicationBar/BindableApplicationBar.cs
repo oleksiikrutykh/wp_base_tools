@@ -13,7 +13,7 @@
     using BaseTools.Core.Utility;
     using BaseTools.UI.Common;
     using System.Threading.Tasks;
-    
+
     /// <summary>
     /// Bindable app bar
     /// </summary>
@@ -43,6 +43,8 @@
         private IApplicationBar displayedApplicationBar;
 
         private Queue<BindableApplicationBarIconButton> additionalButtonsQueue;
+
+        private PhoneApplicationPage rootPage;
 
         public BindableApplicationBar()
         {
@@ -159,7 +161,7 @@
             }
         }
 
-#endregion
+        #endregion
 
         public event EventHandler<ApplicationBarStateChangedEventArgs> StateChanged;
 
@@ -167,34 +169,42 @@
         {
             this.displayedApplicationBar = null;
             this.additionalButtonsQueue.Clear();
-            var page = this.GetVisualAncestors().Where(c => c is PhoneApplicationPage).LastOrDefault() as PhoneApplicationPage;
-            foreach (BindableApplicationBarIconButton button in this.Buttons)
+            var page = this.rootPage;
+            if (page != null)
             {
-                page.ApplicationBar.Buttons.Remove(button.Button);
-            }
+                foreach (BindableApplicationBarIconButton button in this.Buttons)
+                {
+                    page.ApplicationBar.Buttons.Remove(button.Button);
+                }
 
-            foreach (BindableApplicationBarMenuItem menuItem in this.MenuItems)
-            {
-                page.ApplicationBar.MenuItems.Remove(menuItem.Item);
-            }
-            page.ApplicationBar.StateChanged -= new EventHandler<ApplicationBarStateChangedEventArgs>(OnInternalApplicationBarStateChanged);
+                foreach (BindableApplicationBarMenuItem menuItem in this.MenuItems)
+                {
+                    page.ApplicationBar.MenuItems.Remove(menuItem.Item);
+                }
+                page.ApplicationBar.StateChanged -= new EventHandler<ApplicationBarStateChangedEventArgs>(OnInternalApplicationBarStateChanged);
 
-            if (this.storeStateAppBar != null)
-            {
-                
-                page.ApplicationBar.ForegroundColor = this.storeStateAppBar.ForegroundColor;
-                page.ApplicationBar.IsMenuEnabled = this.storeStateAppBar.IsMenuEnabled;
-                page.ApplicationBar.IsVisible = this.storeStateAppBar.IsVisible;
-                page.ApplicationBar.Mode = this.storeStateAppBar.Mode;
-                page.ApplicationBar.Opacity = this.storeStateAppBar.Opacity;
-                ChangeRealBackgroudColor(page, this.storeStateAppBar.BackgroundColor);
+                if (this.storeStateAppBar != null)
+                {
+
+                    page.ApplicationBar.ForegroundColor = this.storeStateAppBar.ForegroundColor;
+                    page.ApplicationBar.IsMenuEnabled = this.storeStateAppBar.IsMenuEnabled;
+                    page.ApplicationBar.IsVisible = this.storeStateAppBar.IsVisible;
+                    page.ApplicationBar.Mode = this.storeStateAppBar.Mode;
+                    page.ApplicationBar.Opacity = this.storeStateAppBar.Opacity;
+                    ChangeRealBackgroudColor(page, this.storeStateAppBar.BackgroundColor);
+                }
+                else
+                {
+                    page.ApplicationBar = null;
+                }
             }
         }
 
         private void SetApplicationBar(BindableApplicationBar bindableAppBar)
         {
             Guard.CheckIsNotNull(bindableAppBar, "bindableAppBar");
-            var page = this.GetVisualAncestors().Where(c => c is PhoneApplicationPage).LastOrDefault() as PhoneApplicationPage;
+            this.rootPage = this.GetVisualAncestors().Where(c => c is PhoneApplicationPage).LastOrDefault() as PhoneApplicationPage;
+            var page = this.rootPage;
             if (page != null)
             {
                 if (page.ApplicationBar != null)
@@ -264,8 +274,10 @@
             var bindableApplicationBar = (BindableApplicationBar)d;
             if (bindableApplicationBar.displayedApplicationBar != null)
             {
-                var page = bindableApplicationBar.GetVisualAncestors().Where(c => c is PhoneApplicationPage).LastOrDefault() as PhoneApplicationPage;
-                ChangeRealBackgroudColor(page, (Color)e.NewValue);
+                if (bindableApplicationBar.rootPage != null)
+                {
+                    ChangeRealBackgroudColor(bindableApplicationBar.rootPage, (Color)e.NewValue);
+                }
             }
         }
 
@@ -334,7 +346,7 @@
             var appBar = menuItem.Parent;
             if ((appBar != null) && (appBar.Items.Contains(menuItem)))
             {
-                var page = appBar.GetVisualAncestors().Where(c => c is PhoneApplicationPage).LastOrDefault() as PhoneApplicationPage;
+                var page = appBar.rootPage;
                 if ((page != null) && (page.ApplicationBar != null))
                 {
                     bool isVisible = (bool)e.NewValue;
@@ -411,7 +423,7 @@
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification="Can't be static")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Can't be static")]
         private void AddMenuItem(IApplicationBar appBar, BindableApplicationBarMenuItem menuItem)
         {
             var bindableAppBar = menuItem.Parent;
@@ -487,7 +499,7 @@
         {
             base.OnItemsChanged(e);
             this.Buttons = new List<object>();
-            this.MenuItems =  new List<object>();
+            this.MenuItems = new List<object>();
             foreach (BindableApplicationBarMenuItem item in this.Items)
             {
                 item.Parent = this;

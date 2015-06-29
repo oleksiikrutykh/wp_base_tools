@@ -1,17 +1,18 @@
 ﻿namespace BaseTools.Core.Storage
 {
     using BaseTools.Core.FileSystem;
-    using BaseTools.Core.Info;
-    using BaseTools.Core.Ioc;
-    using BaseTools.Core.Security;
-    using BaseTools.Core.Threading;
-    using System;
-    using System.Collections.Generic;
-    using System.Globalization;
-    using System.Linq;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
+using BaseTools.Core.Info;
+using BaseTools.Core.Ioc;
+using BaseTools.Core.Security;
+using BaseTools.Core.Threading;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
     public class CacheProvider
     {
@@ -97,12 +98,18 @@
 
         public TimeSpan CacheDuration { get; set; }
 
+        public async Task<List<string>> LoadAllStoredKeys()
+        {
+            await this.InitializeOnStart();
+            List<string> allKeys = new List<string>(this.cacheLifetimeMap.Keys);
+            return allKeys;
+        }
+
         public async Task<bool> IsExpired(string cacheKey)
         {
             await this.InitializeOnStart();
-            var filePath = ConvertToFilePath(cacheKey);
             var putedInCache = DateTime.MinValue;
-            this.cacheLifetimeMap.TryGetValue(filePath, out putedInCache);
+            this.cacheLifetimeMap.TryGetValue(cacheKey, out putedInCache);
             var cacheLifetimeValue = DateTime.UtcNow - putedInCache;
             bool isExpired = cacheLifetimeValue > CacheDuration;
             return isExpired;
@@ -111,10 +118,9 @@
         public async Task MarkAsLoaded(string cacheKey)
         {
             await this.InitializeOnStart();
-            var filePath = ConvertToFilePath(cacheKey);
             lock (cacheLifetimeMapLock)
             {
-                this.cacheLifetimeMap[filePath] = DateTime.UtcNow;
+                this.cacheLifetimeMap[cacheKey] = DateTime.UtcNow;
             }
 
             this.lifetimesWriter.Perform();
@@ -123,18 +129,17 @@
         public async Task MarkAsExpired(string cacheKey)
         {
             await this.InitializeOnStart();
-            var filePath = ConvertToFilePath(cacheKey);
-            if (this.cacheLifetimeMap.ContainsKey(filePath))
+            if (this.cacheLifetimeMap.ContainsKey(cacheKey))
             {
                 lock (cacheLifetimeMapLock)
                 {
                     if (environmentInfo.OperatingSystemType == OperatingSystemType.WindowsPhoneSilverlight)
                     {
-                        this.cacheLifetimeMap.Remove(filePath);
+                        this.cacheLifetimeMap.Remove(cacheKey);
                     }
                     else if (environmentInfo.OperatingSystemType == OperatingSystemType.Windows)
                     {
-                        this.cacheLifetimeMap[filePath] = ExpirationValue;
+                        this.cacheLifetimeMap[cacheKey] = ExpirationValue;
                     }
                 }
 
@@ -185,7 +190,7 @@
             if (environmentInfo.OperatingSystemType == OperatingSystemType.Windows)
             {
                 await this.InitializeOnStart();
-                needCheckFile = this.cacheLifetimeMap.ContainsKey(filePath);
+                needCheckFile = this.cacheLifetimeMap.ContainsKey(cacheKey);
             }
 
             return await this.bufferedStorageProvider.ReadFromFile<T>(filePath, needCheckFile);
@@ -296,9 +301,24 @@
 
                 lock (cacheLifetimeMapLock)
                 {
-                    foreach (var oldFile in deletedFiles)
+                    if (deletedFiles.Count > 0)
                     {
-                        this.cacheLifetimeMap.Remove(oldFile);
+                        var nameMapping = new Dictionary<string, string>();
+                        foreach (var item in this.cacheLifetimeMap)
+                        {
+                            var filePath = this.ConvertCacheKey(item.Key);
+                            nameMapping[filePath] = item.Key;
+                        }
+
+                        foreach (var oldFile in deletedFiles)
+                        {
+                            string key = null;
+                            var isExist = nameMapping.TryGetValue(oldFile, out key);
+                            if (isExist)
+                            {
+                                this.cacheLifetimeMap.Remove(key);
+                            }
+                        }
                     }
                 }
 
@@ -326,6 +346,5 @@
                 await Task.WhenAll(deleteTasks);
             });
         }
-
     }
 }

@@ -14,11 +14,21 @@
         public static string ConvertToString(HttpMethod method)
         {
             string methodString = "GET";
-            if (method == HttpMethod.Post)
+            switch (method)
             {
-                methodString = "POST";
-            }
+                case HttpMethod.Post:
+                    methodString = "POST";
+                    break;
 
+                case HttpMethod.Put:
+                    methodString = "PUT";
+                    break;
+
+                case HttpMethod.Delete:
+                    methodString = "DELETE";
+                    break;
+            }
+            
             return methodString;
         }
     }

@@ -1,6 +1,7 @@
 ﻿namespace BaseTools.Core.Diagnostics
 {
     using BaseTools.Core.Geolocation;
+    using BaseTools.Core.Ioc;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -30,7 +31,22 @@
 
     public class AnalyticsProvider
     {
+        private static AnalyticsProvider instance;
+
         public string Key { get; set; }
+
+        public static AnalyticsProvider Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = Factory.Common.GetInstance<AnalyticsProvider>();
+                }
+
+                return instance;
+            }
+        }
 
         public virtual void StartSession()
         { 

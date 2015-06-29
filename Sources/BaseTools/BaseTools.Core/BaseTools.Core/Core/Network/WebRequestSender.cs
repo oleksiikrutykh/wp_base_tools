@@ -77,7 +77,7 @@
                     request.CookieContainer.Add(cookieUri, message.Cookies);
                 }
 
-                if (message.Method == HttpMethod.Post)
+                if (message.Method == HttpMethod.Post || message.Method == HttpMethod.Put)
                 {
                     if (message.Files.Count > 0)
                     {
